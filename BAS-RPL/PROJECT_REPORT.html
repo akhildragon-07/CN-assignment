@@ -20,33 +20,33 @@
     }
     .cover {
         text-align: center;
-        padding: 80px 20px 100px;
+        padding: 70px 20px 80px;
         border-bottom: 2px solid #e5e7eb;
-        margin-bottom: 40px;
+        margin-bottom: 35px;
     }
     .cover h1 {
-        font-size: 26pt;
+        font-size: 24pt;
         color: #111827;
         margin-bottom: 12px;
         line-height: 1.25;
     }
     .cover .subtitle {
-        font-size: 14pt;
+        font-size: 13pt;
         color: #4b5563;
-        margin-bottom: 40px;
+        margin-bottom: 35px;
     }
     .cover .details {
-        font-size: 12pt;
+        font-size: 11.5pt;
         color: #374151;
-        margin: 15px 0;
+        margin: 10px 0;
     }
     .cover .author-box {
         display: inline-block;
         background: #f9fafb;
         border: 1px solid #e5e7eb;
         border-radius: 8px;
-        padding: 20px 40px;
-        margin-top: 30px;
+        padding: 18px 36px;
+        margin-top: 25px;
         text-align: left;
     }
     .cover .author-box p {
@@ -55,15 +55,15 @@
     }
     h2 {
         color: #1e3a8a;
-        font-size: 16pt;
+        font-size: 15pt;
         border-bottom: 1.5px solid #dbeafe;
         padding-bottom: 6px;
-        margin-top: 36px;
+        margin-top: 32px;
     }
     h3 {
         color: #1f2937;
-        font-size: 13pt;
-        margin-top: 24px;
+        font-size: 12.5pt;
+        margin-top: 22px;
     }
     p, li {
         text-align: justify;
@@ -77,7 +77,7 @@
     }
     th, td {
         border: 1px solid #d1d5db;
-        padding: 10px 12px;
+        padding: 9px 12px;
         text-align: left;
     }
     th {
@@ -88,22 +88,43 @@
     tr:nth-child(even) {
         background-color: #f9fafb;
     }
-    .code-block {
+    .math-block {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
         border-radius: 6px;
-        padding: 12px 16px;
-        font-family: Consolas, monospace;
-        font-size: 9.5pt;
-        white-space: pre-wrap;
-        line-height: 1.4;
+        padding: 10px 18px;
+        margin: 12px 0;
+        text-align: center;
+        font-family: 'Cambria Math', 'Georgia', 'Times New Roman', serif;
+        font-size: 12pt;
+        color: #111827;
+    }
+    .math-inline {
+        font-family: 'Cambria Math', 'Georgia', 'Times New Roman', serif;
+        font-style: italic;
+        font-size: 11pt;
+    }
+    .fraction {
+        display: inline-flex;
+        flex-direction: column;
+        vertical-align: middle;
+        text-align: center;
+        padding: 0 4px;
+        font-size: 0.9em;
+    }
+    .numerator {
+        border-bottom: 1px solid #374151;
+        padding-bottom: 1px;
+    }
+    .denominator {
+        padding-top: 1px;
     }
     .highlight-box {
         background: #eff6ff;
         border-left: 4px solid #3b82f6;
         padding: 14px 18px;
         border-radius: 4px;
-        margin: 20px 0;
+        margin: 18px 0;
     }
 </style>
 </head>
@@ -122,7 +143,7 @@
         <p>2. <strong>Sahasra PT</strong> &nbsp;|&nbsp; Register No: <strong>24BCA7949</strong></p>
     </div>
     
-    <div class="details" style="margin-top: 40px; color: #6b7280;">Date: November 2026</div>
+    <div class="details" style="margin-top: 30px; color: #6b7280;">Date: November 2026</div>
 </div>
 
 <div class="page-break"></div>
@@ -146,7 +167,11 @@ RPL (RFC 6550) is the de-facto standard routing protocol for LLNs. It constructs
 <h2>2. Problem Statement: The Bottleneck Relay Breakdown</h2>
 <p>
 Standard RPL relies on MRHOF (RFC 6719) using <strong>Expected Transmission Count (ETX)</strong>:
-$$\text{PathETX}(u) = \text{PathETX}(p) + \text{LinkETX}(u, p)$$
+</p>
+<div class="math-block">
+    PathETX(<i>u</i>) = PathETX(<i>p</i>) + LinkETX(<i>u</i>, <i>p</i>)
+</div>
+<p>
 Because link ETX only monitors wireless channel retransmissions, it does not reflect buffer occupancy. When an environmental event triggers a burst of packets across a sensor cluster, all nodes select the single relay offering the lowest ETX.
 </p>
 <div class="highlight-box">
@@ -157,20 +182,39 @@ Because link ETX only monitors wireless channel retransmissions, it does not ref
 <p>
 BAS-RPL addresses this limitation through four coordinated innovations:
 </p>
+
 <h3>3.1 Proactive Queue Growth Prediction</h3>
 <p>
-BAS-RPL tracks buffer velocity $\Delta Q = \frac{Q(t) - Q(t-1)}{\Delta t}$ and applies Exponential Moving Average (EMA) smoothing ($\alpha = 0.40$) to prevent false alarms:
-$$\text{EMA}(t) = \alpha \cdot \Delta Q(t) + (1 - \alpha) \cdot \text{EMA}(t-1)$$
-The queue length is projected $H = 2$ steps into the future:
-$$Q_{\text{pred}}(t) = \max(0, Q(t) + H \cdot \text{EMA}(t))$$
-Yielding a normalized Congestion Index $C(t) = \min\left(1.0, \frac{Q_{\text{pred}}(t)}{Q_{\max}}\right)$.
+BAS-RPL tracks buffer velocity 
+<span class="math-inline">&Delta;Q = </span><span class="fraction"><span class="numerator">Q(t) &minus; Q(t&minus;1)</span><span class="denominator">&Delta;t</span></span> 
+and applies Exponential Moving Average (EMA) smoothing (&alpha; = 0.40) to prevent false alarms:
 </p>
+<div class="math-block">
+    EMA(<i>t</i>) = &alpha; &middot; &Delta;<i>Q</i>(<i>t</i>) + (1 &minus; &alpha;) &middot; EMA(<i>t</i> &minus; 1)
+</div>
+<p>
+The queue length is projected <i>H</i> = 2 steps into the future:
+</p>
+<div class="math-block">
+    <i>Q</i><sub>pred</sub>(<i>t</i>) = max(0, <i>Q</i>(<i>t</i>) + <i>H</i> &middot; EMA(<i>t</i>))
+</div>
+<p>
+Yielding a normalized Congestion Index:
+</p>
+<div class="math-block">
+    <i>C</i>(<i>t</i>) = min(1.0, 
+    <span class="fraction"><span class="numerator"><i>Q</i><sub>pred</sub>(<i>t</i>)</span><span class="denominator"><i>Q</i><sub>max</sub></span></span>)
+</div>
 
 <h3>3.2 Multi-Objective Adaptive Cost Function</h3>
 <p>
-Candidate parent $j$ is evaluated by node $i$ using a normalized cost function:
-$$\text{Cost}(i, j) = w_1 \cdot \widehat{\text{ETX}}(i, j) + w_2 \cdot \widehat{\text{Delay}}(j) + w_3 \cdot C_j(t) + w_4 \cdot \text{Penalty}_{\text{energy}}(j)$$
-Configured with weights: $w_1 = 0.35$ (ETX), $w_2 = 0.15$ (Delay), $w_3 = 0.35$ (Congestion), and $w_4 = 0.15$ (Energy).
+Candidate parent <i>j</i> is evaluated by node <i>i</i> using a normalized cost function:
+</p>
+<div class="math-block">
+    Cost(<i>i</i>, <i>j</i>) = <i>w</i><sub>1</sub> &middot; <span style="text-decoration: overline;">ETX</span>(<i>i</i>, <i>j</i>) + <i>w</i><sub>2</sub> &middot; <span style="text-decoration: overline;">Delay</span>(<i>j</i>) + <i>w</i><sub>3</sub> &middot; <i>C</i><sub><i>j</i></sub>(<i>t</i>) + <i>w</i><sub>4</sub> &middot; Penalty<sub>energy</sub>(<i>j</i>)
+</div>
+<p>
+Configured with weights: <i>w</i><sub>1</sub> = 0.35 (ETX), <i>w</i><sub>2</sub> = 0.15 (Delay), <i>w</i><sub>3</sub> = 0.35 (Congestion), and <i>w</i><sub>4</sub> = 0.15 (Energy).
 </p>
 
 <h3>3.3 Route Stability & Anti-Flapping Constraints</h3>
@@ -178,13 +222,19 @@ Configured with weights: $w_1 = 0.35$ (ETX), $w_2 = 0.15$ (Delay), $w_3 = 0.35$ 
 To prevent nodes from oscillating between two relays as their queues fluctuate, BAS-RPL enforces:
 </p>
 <ul>
-    <li><strong>Cooldown Period ($T_{\text{cooldown}} = 4$ steps):</strong> Enforces a minimum hold time on newly selected parents.</li>
-    <li><strong>Switching Hysteresis Barrier ($\delta = 18\%$):</strong> A new parent must offer at least an 18% cost improvement over the current parent.</li>
+    <li><strong>Cooldown Period (<i>T</i><sub>cooldown</sub> = 4 steps):</strong> Enforces a minimum hold time on newly selected parents to prevent rapid route toggling.</li>
+    <li><strong>Switching Hysteresis Barrier (&delta; = 18%):</strong> A new parent candidate must offer at least an 18% cost improvement over the currently selected parent.</li>
 </ul>
 
 <h3>3.4 Loop-Freedom Guarantee</h3>
 <p>
-Candidates must have strictly lower hop depth or DAG rank. Additionally, an upstream cycle-checking function verifies that the node itself does not appear in the candidate's path to Gateway 0.
+Candidates must strictly satisfy monotonic rank and depth constraints:
+</p>
+<div class="math-block">
+    HopDepth(<i>p</i>) &lt; HopDepth(<i>i</i>) &nbsp;&or;&nbsp; (HopDepth(<i>p</i>) == HopDepth(<i>i</i>) &nbsp;&and;&nbsp; Rank(<i>p</i>) &lt; Rank(<i>i</i>))
+</div>
+<p>
+Additionally, an upstream cycle-checking function verifies that the node itself does not appear in the candidate's path to Gateway 0.
 </p>
 
 <h2>4. Simulation Setup & Benchmark Results</h2>
