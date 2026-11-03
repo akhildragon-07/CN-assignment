@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BAS-RPL Project Report - Akhil Rajan P & Sahasra PT</title>
+<style>
+    @media print {
+        @page { margin: 20mm; size: A4; }
+        .page-break { page-break-before: always; }
+        body { font-size: 11pt; }
+    }
+    body {
+        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+        line-height: 1.6;
+        color: #1f2937;
+        max-width: 850px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background: #ffffff;
+    }
+    .cover {
+        text-align: center;
+        padding: 80px 20px 100px;
+        border-bottom: 2px solid #e5e7eb;
+        margin-bottom: 40px;
+    }
+    .cover h1 {
+        font-size: 26pt;
+        color: #111827;
+        margin-bottom: 12px;
+        line-height: 1.25;
+    }
+    .cover .subtitle {
+        font-size: 14pt;
+        color: #4b5563;
+        margin-bottom: 40px;
+    }
+    .cover .details {
+        font-size: 12pt;
+        color: #374151;
+        margin: 15px 0;
+    }
+    .cover .author-box {
+        display: inline-block;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 20px 40px;
+        margin-top: 30px;
+        text-align: left;
+    }
+    .cover .author-box p {
+        margin: 6px 0;
+        font-size: 11.5pt;
+    }
+    h2 {
+        color: #1e3a8a;
+        font-size: 16pt;
+        border-bottom: 1.5px solid #dbeafe;
+        padding-bottom: 6px;
+        margin-top: 36px;
+    }
+    h3 {
+        color: #1f2937;
+        font-size: 13pt;
+        margin-top: 24px;
+    }
+    p, li {
+        text-align: justify;
+        font-size: 11pt;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 10.5pt;
+    }
+    th, td {
+        border: 1px solid #d1d5db;
+        padding: 10px 12px;
+        text-align: left;
+    }
+    th {
+        background-color: #f3f4f6;
+        color: #111827;
+        font-weight: 600;
+    }
+    tr:nth-child(even) {
+        background-color: #f9fafb;
+    }
+    .code-block {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 12px 16px;
+        font-family: Consolas, monospace;
+        font-size: 9.5pt;
+        white-space: pre-wrap;
+        line-height: 1.4;
+    }
+    .highlight-box {
+        background: #eff6ff;
+        border-left: 4px solid #3b82f6;
+        padding: 14px 18px;
+        border-radius: 4px;
+        margin: 20px 0;
+    }
+</style>
+</head>
+<body>
+
+<div class="cover">
+    <h1>BAS-RPL: Burst-Aware Stability-Constrained Routing Protocol for IoT Networks</h1>
+    <div class="subtitle">Design, Implementation, and Comparative Performance Analysis</div>
+    
+    <div class="details"><strong>Course:</strong> Computer Networks (Mini-Project)</div>
+    <div class="details"><strong>Department:</strong> Department of Computer Applications (BCA)</div>
+    
+    <div class="author-box">
+        <p><strong>Submitted By:</strong></p>
+        <p>1. <strong>Akhil Rajan P</strong> &nbsp;|&nbsp; Register No: <strong>24BCA7596</strong></p>
+        <p>2. <strong>Sahasra PT</strong> &nbsp;|&nbsp; Register No: <strong>24BCA7949</strong></p>
+    </div>
+    
+    <div class="details" style="margin-top: 40px; color: #6b7280;">Date: November 2026</div>
+</div>
+
+<div class="page-break"></div>
+
+<h2>Abstract</h2>
+<p>
+In Internet of Things (IoT) and Wireless Sensor Networks (WSNs), resource-constrained nodes operate under strict bandwidth, buffer, and battery constraints. The standardized Routing Protocol for Low-Power and Lossy Networks (RPL, RFC 6550) establishes a Destination-Oriented Directed Acyclic Graph (DODAG) using Objective Functions like MRHOF (RFC 6719) with Expected Transmission Count (ETX) as the path metric. While ETX delivers reliable forwarding in static scenarios, it is completely blind to buffer queues. During sudden event-driven traffic bursts, packets converge on common bottleneck relays, leading to buffer overflow and heavy drop-tail packet loss.
+</p>
+<p>
+This project designs and implements <strong>BAS-RPL</strong> (Burst-Aware Stability-Constrained Routing Protocol). BAS-RPL incorporates proactive queue growth prediction via Exponential Moving Average (EMA) smoothing, an adaptive multi-metric routing cost function, and route stability barriers (cooldown and hysteresis) to eliminate route oscillation. Simulated on a 30-node wireless sensor mesh under identical traffic arrivals, BAS-RPL reduced buffer overflow packet drops by <strong>87%</strong> (from 128 drops down to 17 drops), delivering <strong>+5.7% higher Packet Delivery Ratio (PDR)</strong> and reducing routing control overhead.
+</p>
+
+<h2>1. Introduction & Background</h2>
+<p>
+Low-Power and Lossy Networks (LLNs) connect embedded IoT devices across smart agriculture, healthcare telemetry, and industrial monitoring. These devices operate on IEEE 802.15.4 wireless radios, featuring maximum frame sizes of 127 bytes, transmission speeds of 250 kbps, and finite microcontroller RAM buffers capable of queuing only 15 to 30 packets.
+</p>
+<p>
+RPL (RFC 6550) is the de-facto standard routing protocol for LLNs. It constructs a loop-free Destination-Oriented Directed Acyclic Graph (DODAG) rooted at a central Gateway (Sink). Nodes exchange DODAG Information Objects (DIO) and Destination Advertisement Objects (DAO) to compute scalar <strong>Ranks</strong> and select preferred parents toward the sink.
+</p>
+
+<h2>2. Problem Statement: The Bottleneck Relay Breakdown</h2>
+<p>
+Standard RPL relies on MRHOF (RFC 6719) using <strong>Expected Transmission Count (ETX)</strong>:
+$$\text{PathETX}(u) = \text{PathETX}(p) + \text{LinkETX}(u, p)$$
+Because link ETX only monitors wireless channel retransmissions, it does not reflect buffer occupancy. When an environmental event triggers a burst of packets across a sensor cluster, all nodes select the single relay offering the lowest ETX.
+</p>
+<div class="highlight-box">
+<strong>The Failure Mechanism:</strong> The bottleneck relay receives packets faster than its service rate. Its 20-packet queue saturates to 100%, triggering massive drop-tail packet loss. Meanwhile, neighboring relays sit completely idle with 0% queue occupancy because their ETX is fractionally higher. Standard RPL cannot bypass the congested relay because the physical radio link remains functional.
+</div>
+
+<h2>3. The Proposed BAS-RPL Protocol</h2>
+<p>
+BAS-RPL addresses this limitation through four coordinated innovations:
+</p>
+<h3>3.1 Proactive Queue Growth Prediction</h3>
+<p>
+BAS-RPL tracks buffer velocity $\Delta Q = \frac{Q(t) - Q(t-1)}{\Delta t}$ and applies Exponential Moving Average (EMA) smoothing ($\alpha = 0.40$) to prevent false alarms:
+$$\text{EMA}(t) = \alpha \cdot \Delta Q(t) + (1 - \alpha) \cdot \text{EMA}(t-1)$$
+The queue length is projected $H = 2$ steps into the future:
+$$Q_{\text{pred}}(t) = \max(0, Q(t) + H \cdot \text{EMA}(t))$$
+Yielding a normalized Congestion Index $C(t) = \min\left(1.0, \frac{Q_{\text{pred}}(t)}{Q_{\max}}\right)$.
+</p>
+
+<h3>3.2 Multi-Objective Adaptive Cost Function</h3>
+<p>
+Candidate parent $j$ is evaluated by node $i$ using a normalized cost function:
+$$\text{Cost}(i, j) = w_1 \cdot \widehat{\text{ETX}}(i, j) + w_2 \cdot \widehat{\text{Delay}}(j) + w_3 \cdot C_j(t) + w_4 \cdot \text{Penalty}_{\text{energy}}(j)$$
+Configured with weights: $w_1 = 0.35$ (ETX), $w_2 = 0.15$ (Delay), $w_3 = 0.35$ (Congestion), and $w_4 = 0.15$ (Energy).
+</p>
+
+<h3>3.3 Route Stability & Anti-Flapping Constraints</h3>
+<p>
+To prevent nodes from oscillating between two relays as their queues fluctuate, BAS-RPL enforces:
+</p>
+<ul>
+    <li><strong>Cooldown Period ($T_{\text{cooldown}} = 4$ steps):</strong> Enforces a minimum hold time on newly selected parents.</li>
+    <li><strong>Switching Hysteresis Barrier ($\delta = 18\%$):</strong> A new parent must offer at least an 18% cost improvement over the current parent.</li>
+</ul>
+
+<h3>3.4 Loop-Freedom Guarantee</h3>
+<p>
+Candidates must have strictly lower hop depth or DAG rank. Additionally, an upstream cycle-checking function verifies that the node itself does not appear in the candidate's path to Gateway 0.
+</p>
+
+<h2>4. Simulation Setup & Benchmark Results</h2>
+<p>
+A discrete-time simulation of 30 wireless sensor nodes was executed over 50 steps using identical packet arrival seeds (Seed 42). A concentrated traffic burst was injected at steps 15–24 on a sensor cluster.
+</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Performance Metric</th>
+            <th>Baseline RPL (MRHOF)</th>
+            <th>BAS-RPL (Proposed)</th>
+            <th>Difference / Improvement</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Buffer Overflow Drops</strong></td>
+            <td><strong>128 packets</strong></td>
+            <td><strong>17 packets</strong></td>
+            <td><strong>-111 drops (87% drop reduction)</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Total Delivered Packets</strong></td>
+            <td>214 packets</td>
+            <td>238 packets</td>
+            <td><strong>+24 packets delivered</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Packet Delivery Ratio (PDR)</strong></td>
+            <td>51.0%</td>
+            <td>56.7%</td>
+            <td><strong>+5.7% higher PDR</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Channel Loss Drops</strong></td>
+            <td>13 packets</td>
+            <td>10 packets</td>
+            <td>-3 packets</td>
+        </tr>
+        <tr>
+            <td><strong>Average End-to-End Delay</strong></td>
+            <td>8.61 steps</td>
+            <td>11.10 steps</td>
+            <td>+2.49 steps (physical detour trade-off)</td>
+        </tr>
+        <tr>
+            <td><strong>Routing Control Overhead</strong></td>
+            <td>350 packets</td>
+            <td>250 packets</td>
+            <td><strong>-100 packets (Lower overhead)</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Average Remaining Battery</strong></td>
+            <td>98.2%</td>
+            <td>97.2%</td>
+            <td>Balanced across relay tiers</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>5. Interactive Streamlit Dashboard</h2>
+<p>
+The project includes a 5-page interactive dashboard developed with Streamlit and Plotly:
+</p>
+<ol>
+    <li><strong>Topology & Network:</strong> 2D mesh visualization with node property inspection.</li>
+    <li><strong>Live Simulation:</strong> Step-by-step visual execution and hop transmission logs.</li>
+    <li><strong>Performance Comparison:</strong> Side-by-side benchmark execution and quantitative results table.</li>
+    <li><strong>Graphical Analysis:</strong> Interactive Plotly charts for PDR, drops, queue lengths, and before/after route shift maps.</li>
+    <li><strong>Protocol & Design:</strong> Mathematical formulations, pseudocode, and implementation notes.</li>
+</ol>
+
+<h2>6. Conclusion</h2>
+<p>
+The BAS-RPL protocol successfully addresses the congestion-blindness of standard RPL (MRHOF). By proactively predicting queue growth and enforcing route stability barriers, BAS-RPL reduces buffer overflow drops by <strong>87%</strong>, achieves higher delivery rates, and eliminates route oscillation in burst-prone IoT networks.
+</p>
+
+</body>
+</html>
